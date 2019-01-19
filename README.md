@@ -5,6 +5,7 @@ Part 1:
 We should have a ec2 instance up and running before deploying the application hence initate the ec2 creation by modifying variable files
 
 Variable File: ec2/group_vars/all
+  
     region: 'us-west-1'
     ssh_key: 'sg_demo_key'
     aws_vpc_id: 'vpc-xxx'
