@@ -44,4 +44,4 @@ This playbook excution will perform below tasks.
   5. Run the application in supervisor.
   6. Logrotation for application logs.
   
-Now access the application from http://<ipaddressoftheinstance>:5000
+Now access the application from http://ipaddressoftheinstance:5000
