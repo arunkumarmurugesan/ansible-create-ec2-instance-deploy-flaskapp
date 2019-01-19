@@ -1,0 +1,4 @@
+remote_user: 'ubuntu'
+app_user: 'appuser'
+git_url: 'https://bitbucket.org/azneita/devops-challenge.git'
+app_working_directory: '/home/appuser/sg_demo'

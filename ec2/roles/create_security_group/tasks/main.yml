@@ -1,0 +1,22 @@
+- name: Setting up Security/Firewall Group
+  ec2_group:
+    name: "{{ security_group }}"
+    description: Rules Allowing Traffic on port 22 and 5000
+    region: "{{ region }}" 
+    vpc_id: "{{ aws_vpc_id }}"
+    tags:
+      Name: "{{ security_group }}"
+      env: "production"
+      service: "web"
+    rules:
+     - proto: tcp
+       from_port: 5000
+       to_port: 5000
+       cidr_ip: 0.0.0.0/0
+     - proto: tcp
+       from_port: 22
+       to_port: 22
+       cidr_ip: "{{ office_ip }}"
+    rules_egress:
+     - proto: all
+       cidr_ip: 0.0.0.0/0

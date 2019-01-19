@@ -1,0 +1,10 @@
+---
+-
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  roles:
+    - create_ec2_key
+    - create_security_group
+    - create_ec2_instance
+

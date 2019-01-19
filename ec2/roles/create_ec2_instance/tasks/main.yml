@@ -1,0 +1,85 @@
+---
+# tasks file for ec2
+- name: get subnet ID
+  ec2_vpc_subnet_facts:
+    region: "{{ region }}"
+    filters:
+      "tag:Name": "{{ value }}"
+  register: subnetinfo
+- name: Display subnetinfo
+  debug: var="subnetinfo.subnets[0].subnet_id"
+- name: get vpc ID
+  ec2_vpc_subnet_facts:
+    region: "{{ region }}"
+    filters:
+      "tag:Name": "{{ value }}"
+  register: vpcinfo
+- name: Display vpcinfo
+  debug: var="vpcinfo.subnets[0].vpc_id"
+- name: get the AMI id
+  shell: aws ec2 describe-images --filters "Name=owner-id,Values=099720109477" "Name=name,Values=ubuntu*" "Name=virtualization-type,Values=hvm" --region {{ region }} --query 'Images[*].{ID:ImageId,N:Name}' | grep -B 1 'hvm-ssd/ubuntu-xenial-16.04-amd64-server-20180627' | sed  '1!d' | sed 's/\"//g' | sed 's/\,//g' | awk '{print $1}'
+  register: amiid
+
+- name: Find out playbooks path
+  shell: pwd
+  register: playbook_path_output
+- debug: var=playbook_path_output.stdout
+
+- name: "Lanuching instance \"{{ project_name }}\"-\"{{ instance_name }}\""
+  ec2:
+    key_name: "{{ ssh_key }}"
+    instance_type: "{{ ec2_instance_type }}"
+    region: "{{ region }}"
+    group: "{{ security_group }}"
+    image: "{{ amiid.stdout }}"
+    user_data: "{{ lookup('file', '{{ playbook_path_output.stdout }}/user_data.sh') }}"
+    wait: yes
+    count: 1
+    instance_tags:
+      Name: "{{ project_name }}_{{ instance_name }}"
+      env: "{{ env }}"
+    volumes:
+      - device_name: /dev/sda1
+        volume_size: "{{ ebs_volume_size }}"
+        delete_on_termination: true
+    vpc_subnet_id: "{{ subnetinfo.subnets[0].subnet_id }}"
+    assign_public_ip: yes
+  register: ec2
+- name: Allocating elastic IP to instance
+  ec2_eip:
+    region: "{{ region }}"
+    in_vpc: yes
+    state: present
+    instance_id: "{{ ec2.instances[0].id }}"
+  register: eip
+- debug: var=eip.public_ip
+
+- name: Add new Instance to host group
+  add_host: 
+    name={{ eip.public_ip }} 
+    groups= bastion
+  with_items: "{{ ec2.instances }}"
+- name: Wait for SSH to come up
+  wait_for:
+    host={{ eip.public_ip }}
+    port=22
+    delay=60 
+    timeout=320 
+    state=started
+  with_items: "{{ ec2.instances }}"
+- name: get the public IP of Bastion server
+  ec2_instance_facts:
+    region: "{{ region }}"
+    filters:
+      "tag:Name": "{{ project_name }}_{{ instance_name }}"
+  register: ec2info
+- name: Display ec2info
+  debug: var="ec2info.instances[0].public_ip_address"
+#- local_action: copy content={{ eip.public_ip }} dest=/Users/arunkumar.murugesan/sg_demo/host
+
+- name: add a host to the inventory
+  lineinfile:
+    path: '{{ playbook_path_output.stdout }}/host'
+    line: '{{ project_name }}_{{ instance_name }} ansible_ssh_host={{ eip.public_ip }} ansible_ssh_port=22 ansible_ssh_private_key_file={{ playbook_path_output.stdout }}/aws_sg_demo_private.pem'
+    insertbefore: BOF
+

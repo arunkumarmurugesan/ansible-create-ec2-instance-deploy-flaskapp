@@ -1,0 +1,38 @@
+- name: Install base packages
+  apt: name={{ item }} state=present
+  with_items:
+   - locales
+   - build-essential
+   - git
+   - supervisor
+   - python-pip
+- name: Install application related packages
+  pip: name={{ item }} 
+  with_items:
+   - flask
+   - jsonify
+   - request
+   - Werkzeug
+- name: Set the Timezone to UTC
+  timezone: name=Etc/UTC
+- name: Create an appuser user.
+  user: name="{{ app_user }}" shell="/sbin/login" state="present" home=/home/appuser
+- name: Clone a private repository into /opt.
+  git:
+   repo: '{{ git_url }}'
+   version: master
+   dest: '{{ app_working_directory }}'
+   accept_hostkey: yes
+  become: yes
+  become_user: '{{ app_user }}'
+- name: Copy the supervisor app  configuration file
+  template:
+    src: sg_demo.conf
+    dest: /etc/supervisor/conf.d/sg_demo.conf
+
+- name: Read the supervisor config
+  command: supervisorctl reread
+ 
+- name: Restart the supervisor to start the application
+  supervisorctl: name=prodappuser state=started config=/etc/supervisor/supervisord.conf
+  

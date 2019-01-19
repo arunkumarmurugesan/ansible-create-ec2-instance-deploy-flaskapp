@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  gather_facts: false
+  remote_user: '{{ remote_user }}'
+  roles:
+    - deploy_application
