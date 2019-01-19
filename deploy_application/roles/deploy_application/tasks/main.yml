@@ -33,6 +33,14 @@
 - name: Read the supervisor config
   command: supervisorctl reread
  
-- name: Restart the supervisor to start the application
+- name: Start the supervisor to start the application
   supervisorctl: name=prodappuser state=started config=/etc/supervisor/supervisord.conf
+  
+- name: Enable the logrotate config for application logs
+  template: >
+    src=sg_demo_logrotate.conf
+    dest=/etc/logrotate.d/prodappuser
+    owner=root
+    group=root
+    mode=0644 
   
