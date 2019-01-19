@@ -37,10 +37,11 @@ cd deploy_application
 ansible-playbook main.yml ../ec2/aws_sg_demo_private.pem -v
 
 This playbook excution will perform below tasks.
-  1. Install the required package
-  2. Create an application user
-  3. Git clone the code repo
-  4. Set the timezone to UTC
+  1. Install the required package.
+  2. Create an application user.
+  3. Git clone the code repo.
+  4. Set the timezone to UTC.
   5. Run the application in supervisor.
+  6. Logrotation for application logs.
   
 Now access the application from http://<ipaddressoftheinstance>:5000
